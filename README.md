@@ -1,81 +1,134 @@
 # AutomaPrint
 
-**REST API Print Server for Windows**
+**Windows REST API Print Server - Print PDFs from anywhere**
 
-AutomaPrint is a lightweight Windows application that provides a REST API for printing PDF files to local printers. It includes a GUI for easy configuration and optional Cloudflare tunnel support for remote access.
+Turn any Windows PC with a printer into a network print server with a simple REST API. Perfect for automating document printing from web apps, scripts, or remote systems.
 
-## Features
+---
 
-- 🖨️ **REST API** - Simple HTTP endpoint for printing PDFs
-- 🖥️ **GUI Interface** - Easy-to-use system tray application
-- ⚙️ **Print Settings** - Configure scaling, color mode, and duplex printing
-- 🌐 **Remote Access** - Built-in Cloudflare tunnel for remote printing
-- 🔧 **Auto-download** - Automatically downloads dependencies (SumatraPDF) on first use
-- 🚀 **Zero Config** - Works out of the box with sensible defaults
+## 🚀 Quick Start
 
-## Installation
+1. **Download** the latest [AutomaPrint.exe](https://github.com/ksi-digital/automaprint/releases)
+2. **Run** the executable
+3. **Select** your printer from the list
+4. **Done!** Your print server is running at `http://localhost:8080`
 
-### Download Pre-built Release
-
-1. Download `AutomaPrint.exe` from the [latest release](https://github.com/ksi-digital/automaprint/releases)
-2. Run the executable
-3. Select your printer from the list
-4. That's it! The server will start automatically
-
-### Build from Source
-
-Requirements:
-- Python 3.11+
-- Windows OS
-
+**Test it:**
 ```bash
-# Clone the repository
-git clone https://github.com/ksi-digital/automaprint.git
-cd automaprint
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the application
-python main.py
+curl http://localhost:8080/health
 ```
 
-## Usage
-
-### GUI Mode (Default)
-
-Simply run the executable or:
-
+**Print a PDF:**
 ```bash
-python main.py
+curl -X POST -H "Content-Type: application/pdf" \
+     --data-binary @document.pdf \
+     http://localhost:8080/print
 ```
 
-The application will:
-- Start in the system tray
-- Auto-start the print server
-- Show status and tunnel information (if enabled)
+---
 
-### Server-Only Mode
+## 📖 User Guide
 
-Run without GUI:
+### System Tray Application
 
+AutomaPrint runs in your system tray with these features:
+
+- **Status** - Shows server status and current configuration
+- **Settings** - Configure printer, port, and print options
+- **Remote Access** - Enable/disable Cloudflare tunnel
+- **Auto-start** - Launch automatically with Windows
+
+### Configuration
+
+Access settings by right-clicking the system tray icon → **Settings**
+
+#### Print Settings
+
+| Setting | Options | Description |
+|---------|---------|-------------|
+| **Scaling** | Fit / Shrink / Original | How pages fit on paper |
+| **Color** | Color / Monochrome | Color or black & white |
+| **Duplex** | Single / Long Edge / Short Edge | Single or double-sided |
+
+#### Remote Access (Cloudflare Tunnel)
+
+Enable remote printing from anywhere:
+
+1. Open **Settings** → **Remote Access**
+2. Check **Enable Cloudflare Tunnel**
+3. Click **Start Server**
+4. Copy the tunnel URL (e.g., `https://xyz.trycloudflare.com`)
+5. Copy the API key for authentication
+
+**Print remotely:**
 ```bash
-python main.py server
+curl -X POST \
+     -H "Content-Type: application/pdf" \
+     -H "X-API-Key: your-api-key" \
+     --data-binary @document.pdf \
+     https://xyz.trycloudflare.com/print
 ```
 
-### Test Client
+⚠️ **Security:** API keys are required when tunnel is enabled. Regenerate keys regularly via Settings.
 
-Test your installation:
+### Configuration File
 
-```bash
-python main.py test
+Settings are stored in `%USERPROFILE%\AutomaPrint\config.json`
+
+```json
+{
+  "printer_name": "HP LaserJet Pro",
+  "port": 8080,
+  "auto_start": true,
+  "minimize_to_tray": true,
+  "print_scaling": "shrink",
+  "print_color": "color",
+  "print_duplex": "simplex",
+  "use_tunnel": false,
+  "api_key": "auto-generated-uuid"
+}
 ```
 
-## API Reference
+### Auto-Start with Windows
 
-### Health Check
+Enable in **Settings** → **Auto-start with Windows**
 
-```bash
+AutomaPrint will:
+- Start minimized to system tray
+- Automatically launch the print server
+- Use your saved configuration
+
+### Troubleshooting
+
+#### Printer Not Found
+- Ensure printer is installed and online
+- Check printer name matches exactly (case-sensitive)
+- Restart AutomaPrint
+
+#### Port Already in Use
+- Change port in Settings (default: 8080)
+- Check if another application is using the port
+
+#### PDF Not Printing
+- Verify PDF file is valid
+- Check SumatraPDF downloaded (in `%USERPROFILE%\AutomaPrint\`)
+- Test with the included `blank.pdf`
+
+#### Firewall Blocking
+Add firewall exception:
+1. Windows Security → Firewall
+2. Allow an app through firewall
+3. Add `AutomaPrint.exe`
+
+---
+
+## 💻 Developer Guide
+
+### API Reference
+
+#### Health Check
+
+```http
 GET /health
 ```
 
@@ -88,21 +141,20 @@ GET /health
 }
 ```
 
-### Print PDF
+#### Print PDF
 
-```bash
+```http
 POST /print
 Content-Type: application/pdf
+
+[PDF binary data]
 ```
 
-**Example:**
+**Optional Query Parameters:**
+- `printer` - Override default printer
 
-```bash
-# Print a PDF file
-curl -X POST -H "Content-Type: application/pdf" \
-     --data-binary @document.pdf \
-     http://localhost:8080/print
-```
+**Headers (when tunnel enabled):**
+- `X-API-Key` - Authentication key
 
 **Response:**
 ```json
@@ -112,216 +164,183 @@ curl -X POST -H "Content-Type: application/pdf" \
 }
 ```
 
-### Using with API Key (Remote Access)
-
-When Cloudflare tunnel is enabled, use the API key for authentication:
-
-```bash
-curl -X POST -H "Content-Type: application/pdf" \
-     -H "X-API-Key: your-api-key-here" \
-     --data-binary @document.pdf \
-     https://your-tunnel-url.trycloudflare.com/print
-```
-
-## Configuration
-
-Configuration is stored in `%USERPROFILE%\AutomaPrint\config.json`
-
-**Default Settings:**
-
+**Error Response:**
 ```json
 {
-  "printer_name": "",
-  "port": 8080,
-  "auto_start": false,
-  "minimize_to_tray": true,
-  "print_scaling": "shrink",
-  "print_color": "color",
-  "print_duplex": "simplex",
-  "use_tunnel": false,
-  "api_key": ""
+  "status": "error",
+  "error": "Printer not found"
 }
 ```
 
-### Print Settings
+### Architecture
 
-| Setting | Options | Description |
-|---------|---------|-------------|
-| `print_scaling` | `fit`, `shrink`, `noscale` | How to scale pages to fit paper |
-| `print_color` | `color`, `monochrome` | Color or black & white printing |
-| `print_duplex` | `simplex`, `duplexlong`, `duplexshort` | Single or double-sided printing |
+```mermaid
+graph TB
+    A[Client Application] -->|HTTP POST| B[AutomaPrint Server]
+    B -->|Download if missing| C[SumatraPDF]
+    B -->|Print Command| C
+    C -->|Win32 API| D[Windows Print Spooler]
+    D --> E[Physical Printer]
 
-### Remote Access (Cloudflare Tunnel)
+    F[Cloudflare Tunnel] -.->|Optional| B
+    F -->|HTTPS + API Key| G[Remote Client]
 
-Enable remote access via the GUI settings:
+    style B fill:#4CAF50
+    style C fill:#2196F3
+    style F fill:#FF9800
+```
 
-1. Check "Enable Cloudflare Tunnel"
-2. Start the server
-3. Copy the tunnel URL shown in the status
-4. Use the displayed API key for authentication
+### Use Cases
 
-**Security:** API keys are automatically generated and required for all requests when tunnel is enabled.
+- **Web Applications** - Print invoices, labels, receipts from your web app
+- **Workflow Automation** - Integrate printing into scripts and CI/CD
+- **Remote Printing** - Print from mobile apps or remote systems
+- **Label Printing** - Automate shipping label printing
+- **Document Processing** - Batch print generated documents
 
-## Build Executable
+### Integration Examples
 
-Build a standalone executable using PyInstaller:
+#### Python
+```python
+import requests
 
+with open('document.pdf', 'rb') as f:
+    response = requests.post(
+        'http://localhost:8080/print',
+        data=f,
+        headers={'Content-Type': 'application/pdf'}
+    )
+    print(response.json())
+```
+
+#### JavaScript (Node.js)
+```javascript
+const fs = require('fs');
+const axios = require('axios');
+
+const pdf = fs.readFileSync('document.pdf');
+
+axios.post('http://localhost:8080/print', pdf, {
+  headers: {'Content-Type': 'application/pdf'}
+}).then(res => console.log(res.data));
+```
+
+#### PHP
+```php
+$pdf = file_get_contents('document.pdf');
+
+$ch = curl_init('http://localhost:8080/print');
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $pdf);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/pdf']);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+echo $response;
+```
+
+### Building from Source
+
+**Requirements:**
+- Python 3.11+
+- Windows OS
+
+**Setup:**
 ```bash
+git clone https://github.com/ksi-digital/automaprint.git
+cd automaprint
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run in development
+python main.py
+
+# Build executable
 python build.py
 ```
 
-The executable will be created in `dist/AutomaPrint.exe`
+**Output:** `dist/AutomaPrint.exe`
 
-## Architecture
-
-```
-┌─────────────────────────────────────────┐
-│  AutomaPrint GUI (System Tray)          │
-│  - Configuration                         │
-│  - Status Display                        │
-│  - Tunnel Management                     │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│  Flask REST API Server                  │
-│  - /health  - Health check              │
-│  - /print   - Print PDF                 │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│  Print Engine                            │
-│  - SumatraPDF (auto-downloaded)         │
-│  - Win32 Print API                       │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│  Windows Print Spooler                   │
-│  → Local Printer                         │
-└──────────────────────────────────────────┘
-
-Optional:
-┌─────────────────────────────────────────┐
-│  Cloudflare Tunnel (cloudflared)        │
-│  - Auto-download on enable              │
-│  - Public HTTPS endpoint                 │
-│  - API key authentication                │
-└──────────────────────────────────────────┘
-```
-
-## Dependencies
-
-### Runtime (Auto-downloaded)
-- **SumatraPDF** - PDF rendering and printing (downloaded on first use)
-- **cloudflared** - Cloudflare tunnel client (downloaded when tunnel is enabled)
-
-### Python Dependencies
-- Flask - Web framework
-- pywin32 - Windows API access
-- pystray - System tray icon
-- Pillow - Image processing
-
-See [requirements.txt](requirements.txt) for full list.
-
-## Use Cases
-
-- **Automated Printing** - Integrate printing into workflows and scripts
-- **Remote Printing** - Print from anywhere via Cloudflare tunnel
-- **Label Printing** - Print shipping labels from web applications
-- **Document Automation** - Auto-print invoices, receipts, reports
-- **IoT Printing** - Enable printing from embedded devices
-
-## Troubleshooting
-
-### Port Already in Use
-
-Change the port in configuration or via GUI settings.
-
-### Printer Not Found
-
-1. Ensure printer is installed and online
-2. Check printer name matches exactly (case-sensitive)
-3. Restart the application
-
-### PDF Not Printing
-
-1. Check PDF file is valid
-2. Verify SumatraPDF downloaded successfully (check `%USERPROFILE%\AutomaPrint\`)
-3. Test with blank.pdf from assets folder
-
-### Firewall Issues
-
-Add exception for AutomaPrint in Windows Firewall:
-```
-Control Panel → Windows Defender Firewall → Allow an app
-```
-
-## Security Notes
-
-- **Local Mode**: No authentication required (localhost only)
-- **Tunnel Mode**: API key required for all requests
-- **API Keys**: Auto-generated UUIDs, stored in config.json
-- **HTTPS**: Cloudflare tunnel provides automatic HTTPS
-
-**Recommendation:** Only enable tunnel mode when needed, and regenerate API keys regularly via the GUI.
-
-## Development
-
-### Project Structure
-
-```
-automaprint/
-├── automaprint/          # Main package
-│   ├── config.py         # Configuration management
-│   ├── server.py         # Flask REST API
-│   ├── printer.py        # Print engine
-│   ├── sumatra.py        # SumatraPDF download manager
-│   ├── tunnel.py         # Cloudflare tunnel manager
-│   ├── gui.py            # GUI application
-│   ├── autostart.py      # Windows autostart
-│   └── test_client.py    # Test utilities
-├── assets/               # Icons and test files
-├── main.py               # Entry point
-├── build.py              # PyInstaller build script
-├── AutomaPrint.spec      # PyInstaller configuration
-└── requirements.txt      # Python dependencies
-```
-
-### Running Tests
+### Development Commands
 
 ```bash
-# Start test client
-python main.py test
+# Run GUI (default)
+python main.py
 
-# Manual API test
-curl http://localhost:8080/health
+# Run server only (no GUI)
+python main.py server
+
+# Show help
+python main.py --help
 ```
 
-## License
+### Dependencies
 
-MIT License - see [LICENSE](LICENSE) file for details.
+**Auto-Downloaded (Runtime):**
+- SumatraPDF - PDF rendering engine
+- cloudflared - Cloudflare tunnel client (optional)
 
-## Contributing
+**Python Packages:**
+- Flask - REST API framework
+- pywin32 - Windows API
+- pystray - System tray
+- Pillow - Image processing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+See [requirements.txt](requirements.txt) for versions.
+
+### Release Process
+
+Create a new release by tagging:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+GitHub Actions will automatically:
+- Build Windows executable
+- Create GitHub release
+- Attach `.exe` and `.zip` files
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file.
+
+Free to use, modify, and distribute.
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add feature'`)
+4. Push to branch (`git push origin feature/amazing`)
+5. Open Pull Request
 
-## Support
+---
 
-- 🐛 [Report Issues](https://github.com/ksi-digital/automaprint/issues)
-- 💬 [Discussions](https://github.com/ksi-digital/automaprint/discussions)
+## 🐛 Support
 
-## Author
+- **Issues:** [GitHub Issues](https://github.com/ksi-digital/automaprint/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/ksi-digital/automaprint/discussions)
+
+---
+
+## 👤 Author
 
 **KSI Digital**
 - Website: [ksi-digital.com](https://ksi-digital.com)
 - GitHub: [@ksi-digital](https://github.com/ksi-digital)
 
-## Acknowledgments
+---
 
-- [SumatraPDF](https://www.sumatrapdfreader.org/) - Fast, lightweight PDF viewer
-- [Cloudflare](https://www.cloudflare.com/) - Cloudflare Tunnel for remote access
+## 🙏 Acknowledgments
+
+- [SumatraPDF](https://www.sumatrapdfreader.org/) - Lightweight PDF viewer
+- [Cloudflare](https://www.cloudflare.com/) - Tunnel infrastructure
