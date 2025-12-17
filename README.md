@@ -12,6 +12,8 @@ Turn any Windows PC with a printer into a network print server with a simple RES
 - **Label Printing** - Automate shipping label printing
 - **Document Processing** - Batch print generated documents
 
+![AutomaPrint Demo](assets/AutomaPrint.gif)
+
 ---
 
 ## 🚀 Quick Start
