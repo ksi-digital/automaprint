@@ -54,9 +54,14 @@ def print_raw(data, printer_name, log_callback=None):
         return False
 
 
-def get_sumatra_path():
+def get_sumatra_path(log_callback=None):
     """Find SumatraPDF executable (auto-downloads if needed)"""
     from . import sumatra
+
+    def log(msg):
+        print(msg)
+        if log_callback:
+            log_callback(msg)
 
     # Try to find existing installation
     sumatra_path = sumatra.get_sumatra_path()
@@ -65,8 +70,8 @@ def get_sumatra_path():
         return sumatra_path
 
     # Not found, attempt to download
-    print("[INFO] SumatraPDF not found, attempting to download...")
-    return sumatra.download_sumatra()
+    log("[INFO] SumatraPDF not found, attempting to download...")
+    return sumatra.download_sumatra(log_callback)
 
 
 def get_sumatra_path_no_download():
@@ -115,10 +120,10 @@ def print_pdf(pdf_data, printer_name, log_callback=None, print_settings=None):
         if log_callback:
             log_callback(msg)
 
-    # Find SumatraPDF
-    sumatra = get_sumatra_path()
+    # Find SumatraPDF (will auto-download if needed, with progress shown in logs)
+    sumatra = get_sumatra_path(log_callback)
     if not sumatra:
-        log("[!] SumatraPDF not found! Please place SumatraPDF.exe in the app folder.")
+        log("[!] SumatraPDF download failed! Please check your internet connection.")
         return False
 
     # Build print settings

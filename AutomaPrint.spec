@@ -4,7 +4,7 @@
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[('assets/SumatraPDF-3.5.2-32.exe', '.')],
+    binaries=[],
     datas=[('assets/icon.ico', '.'), ('assets/blank.pdf', '.')],
     hiddenimports=['flask', 'werkzeug', 'werkzeug.serving', 'jinja2', 'markupsafe', 'itsdangerous', 'click', 'blinker', 'win32print', 'win32api', 'win32gui', 'win32con', 'pystray', 'pystray._base', 'pystray._win32', 'pystray._util', 'six', 'PIL', 'PIL.Image', 'PIL.ImageDraw', 'PIL._imaging', 'psutil'],
     hookspath=[],

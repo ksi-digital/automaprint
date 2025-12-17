@@ -146,7 +146,7 @@ def build_exe():
         '--icon=assets/icon.ico',                         # App icon
         '--add-data=assets/icon.ico;.',                   # Include icon for runtime
         '--add-data=assets/blank.pdf;.',                  # Include test PDF
-        '--add-binary=assets/SumatraPDF-3.5.2-32.exe;.',  # Include SumatraPDF
+        # SumatraPDF is auto-downloaded at runtime (see automaprint/sumatra.py)
     ]
 
     # Add exclusions
