@@ -57,8 +57,13 @@ def get_cloudflared_path():
     return None
 
 
-def download_cloudflared(log_callback=None):
-    """Download cloudflared executable"""
+def download_cloudflared(log_callback=None, force_update=False):
+    """Download cloudflared executable
+
+    Args:
+        log_callback: Optional logging callback function
+        force_update: If True, re-download even if already exists
+    """
     def log(msg):
         print(msg)
         if log_callback:
@@ -67,9 +72,17 @@ def download_cloudflared(log_callback=None):
     data_dir = cfg.get_data_dir()
     exe_path = os.path.join(data_dir, CLOUDFLARED_FILENAME)
 
-    if os.path.exists(exe_path):
+    if os.path.exists(exe_path) and not force_update:
         log("[OK] cloudflared already downloaded")
         return exe_path
+
+    if force_update and os.path.exists(exe_path):
+        log("[UPDATE] Updating cloudflared...")
+        try:
+            os.unlink(exe_path)
+        except Exception as e:
+            log(f"[ERROR] Could not remove old version: {e}")
+            return None
 
     url = get_cloudflared_url()
     arch = platform.machine()
@@ -85,7 +98,7 @@ def download_cloudflared(log_callback=None):
 
         urllib.request.urlretrieve(url, exe_path, report_progress)
 
-        log(f"[OK] cloudflared downloaded")
+        log(f"[OK] cloudflared {'updated' if force_update else 'downloaded'}")
         return exe_path
 
     except Exception as e:

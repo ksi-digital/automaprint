@@ -20,6 +20,9 @@ assets/SumatraPDF.exe
 assets/SumatraPDF-*.exe
 assets/cloudflared.exe
 
+# SumatraPDF settings (created by SumatraPDF)
+SumatraPDF-settings.txt
+
 # User data and config
 config.json
 *.log

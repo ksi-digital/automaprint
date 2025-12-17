@@ -12,6 +12,8 @@ from tkinter import ttk, filedialog
 from . import autostart
 from . import test_client
 from . import config as cfg
+from . import sumatra
+from . import tunnel
 from .server import PrintServer
 from .logging_setup import setup_logger, cleanup_old_logs
 
@@ -79,6 +81,9 @@ class AutomaPrintGUI:
         if TRAY_AVAILABLE:
             self.setup_tray()
 
+        # Check and download SumatraPDF at startup (after GUI is ready)
+        self.root.after(100, self.check_sumatra_at_startup)
+
         # Auto-start handling
         if auto_start_mode:
             if TRAY_AVAILABLE:
@@ -103,6 +108,24 @@ class AutomaPrintGUI:
                 self.root.iconbitmap(icon_path)
         except Exception as e:
             print(f"Could not load icon: {e}")
+
+    def check_sumatra_at_startup(self):
+        """Check for SumatraPDF at startup and download if needed"""
+        sumatra_path = sumatra.get_sumatra_path()
+
+        if sumatra_path:
+            self.log_message(f"[OK] SumatraPDF ready")
+        else:
+            self.log_message("[INFO] SumatraPDF not found, downloading...")
+            # Download in a separate thread to avoid blocking UI
+            def download_on_startup():
+                result = sumatra.download_sumatra(log_callback=self.log_message)
+                if result:
+                    self.log_message(f"[OK] SumatraPDF ready")
+                else:
+                    self.log_message("[ERROR] Failed to download SumatraPDF")
+
+            threading.Thread(target=download_on_startup, daemon=True).start()
 
     def create_widgets(self):
         """Create GUI widgets"""
@@ -354,6 +377,34 @@ class AutomaPrintGUI:
             minimize_check.config(state="disabled")
             ttk.Label(app_frame, text="(System tray not available)",
                       font=("Arial", 8), foreground="gray").pack(anchor=tk.W)
+
+        # Software Updates
+        updates_frame = ttk.LabelFrame(parent, text="Software Updates", padding="10")
+        updates_frame.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+        # SumatraPDF update
+        sumatra_row = ttk.Frame(updates_frame)
+        sumatra_row.pack(fill=tk.X, pady=5)
+
+        sumatra_version = sumatra.get_sumatra_version()
+        ttk.Label(sumatra_row, text=f"SumatraPDF (v{sumatra_version})",
+                  font=("Arial", 10)).pack(side=tk.LEFT)
+
+        ttk.Button(sumatra_row, text="Update SumatraPDF", width=20,
+                   command=self.update_sumatra).pack(side=tk.RIGHT)
+
+        # Cloudflared update
+        cloudflared_row = ttk.Frame(updates_frame)
+        cloudflared_row.pack(fill=tk.X, pady=5)
+
+        ttk.Label(cloudflared_row, text="Cloudflare Tunnel (latest)",
+                  font=("Arial", 10)).pack(side=tk.LEFT)
+
+        ttk.Button(cloudflared_row, text="Update Cloudflare", width=20,
+                   command=self.update_cloudflared).pack(side=tk.RIGHT)
+
+        ttk.Label(updates_frame, text="Note: Updates download latest versions. Server must be stopped to apply.",
+                  font=("Arial", 8), foreground="gray").pack(anchor=tk.W, pady=(10, 0))
 
     def create_about_tab(self, parent):
         """Create about tab with KSI Digital branding"""
@@ -696,6 +747,40 @@ Headers:
             print_duplex=duplex_key
         )
         self.log_message(f"[OK] Print settings saved")
+
+    def update_sumatra(self):
+        """Update SumatraPDF to latest version"""
+        if self.server.running:
+            self.log_message("[WARN] Please stop the server before updating SumatraPDF")
+            return
+
+        self.log_message("[UPDATE] Updating SumatraPDF...")
+
+        def run_update():
+            result = sumatra.download_sumatra(log_callback=self.log_message, force_update=True)
+            if result:
+                self.log_message("[OK] SumatraPDF update completed")
+            else:
+                self.log_message("[ERROR] SumatraPDF update failed")
+
+        threading.Thread(target=run_update, daemon=True).start()
+
+    def update_cloudflared(self):
+        """Update Cloudflare Tunnel to latest version"""
+        if self.server.running:
+            self.log_message("[WARN] Please stop the server before updating Cloudflare Tunnel")
+            return
+
+        self.log_message("[UPDATE] Updating Cloudflare Tunnel...")
+
+        def run_update():
+            result = tunnel.download_cloudflared(log_callback=self.log_message, force_update=True)
+            if result:
+                self.log_message("[OK] Cloudflare Tunnel update completed")
+            else:
+                self.log_message("[ERROR] Cloudflare Tunnel update failed")
+
+        threading.Thread(target=run_update, daemon=True).start()
 
     def on_closing(self):
         """Handle window closing"""
