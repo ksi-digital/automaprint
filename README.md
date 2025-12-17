@@ -4,6 +4,14 @@
 
 Turn any Windows PC with a printer into a network print server with a simple REST API. Perfect for automating document printing from web apps, scripts, or remote systems.
 
+### Use Cases
+
+- **Web Applications** - Print invoices, labels, receipts from your web app
+- **Workflow Automation** - Integrate printing into scripts and CI/CD
+- **Remote Printing** - Print from mobile apps or remote systems
+- **Label Printing** - Automate shipping label printing
+- **Document Processing** - Batch print generated documents
+
 ---
 
 ## 🚀 Quick Start
@@ -29,18 +37,29 @@ curl -X POST -H "Content-Type: application/pdf" \
 
 ## 📖 User Guide
 
-### System Tray Application
+### User Interface
 
-AutomaPrint runs in your system tray with these features:
+AutomaPrint features a full GUI application with system tray support.
 
-- **Status** - Shows server status and current configuration
-- **Settings** - Configure printer, port, and print options
-- **Remote Access** - Enable/disable Cloudflare tunnel
-- **Auto-start** - Launch automatically with Windows
+#### Main Window
+
+The application opens with a tabbed interface:
+
+- **Server Tab** - Start/stop server, configure printer and port, view server logs
+- **Test Client Tab** - Test printing with sample PDFs
+- **Settings Tab** - Configure print settings (scaling, color, duplex), enable auto-start, and update SumatraPDF/Cloudflare
+- **About Tab** - Version info and API documentation
+
+#### System Tray
+
+When minimized, AutomaPrint runs in your system tray:
+
+- **Double-click** - Show/hide main window
+- **Right-click menu** - Show Window, Hide Window, Start Server, Stop Server, Quit
 
 ### Configuration
 
-Access settings by right-clicking the system tray icon → **Settings**
+Access settings via the **Settings tab** in the main window, or the **Server tab** for printer/port selection
 
 #### Print Settings
 
@@ -54,7 +73,7 @@ Access settings by right-clicking the system tray icon → **Settings**
 
 Enable remote printing from anywhere:
 
-1. Open **Settings** → **Remote Access**
+1. Open the **Server tab**
 2. Check **Enable Cloudflare Tunnel**
 3. Click **Start Server**
 4. Copy the tunnel URL (e.g., `https://xyz.trycloudflare.com`)
@@ -69,7 +88,7 @@ curl -X POST \
      https://xyz.trycloudflare.com/print
 ```
 
-⚠️ **Security:** API keys are required when tunnel is enabled. Regenerate keys regularly via Settings.
+⚠️ **Security:** API keys are required when tunnel is enabled. Regenerate keys via the **Server tab** or **Settings tab**.
 
 ### Configuration File
 
@@ -91,7 +110,7 @@ Settings are stored in `%USERPROFILE%\AutomaPrint\config.json`
 
 ### Auto-Start with Windows
 
-Enable in **Settings** → **Auto-start with Windows**
+Enable in the **Settings tab** → **Auto-start with Windows**
 
 AutomaPrint will:
 - Start minimized to system tray
@@ -189,14 +208,6 @@ graph TB
     style C fill:#2196F3
     style F fill:#FF9800
 ```
-
-### Use Cases
-
-- **Web Applications** - Print invoices, labels, receipts from your web app
-- **Workflow Automation** - Integrate printing into scripts and CI/CD
-- **Remote Printing** - Print from mobile apps or remote systems
-- **Label Printing** - Automate shipping label printing
-- **Document Processing** - Batch print generated documents
 
 ### Integration Examples
 
