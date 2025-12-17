@@ -1,0 +1,15 @@
+# AutomaPrint Server - REST API PDF Print Server
+# Pinned to latest versions (Dec 2025)
+
+# Core
+Flask==3.1.2
+Werkzeug==3.1.4
+pywin32==311
+psutil==7.1.3
+
+# GUI (system tray)
+pystray==0.19.5
+Pillow==12.0.0
+
+# Build (dev only)
+pyinstaller==6.17.0
